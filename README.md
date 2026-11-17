@@ -14,7 +14,7 @@ Stackd is a **paper-trading simulator** with the feature depth of a real retail 
 | --- | --- |
 | **Basic** | Onboarding with a risk-tolerance quiz · portfolio dashboard with live value & performance chart (1D–5Y) · buy/sell with **fractional shares** · watchlist · asset pages with charts, 52-week stats & news · full transaction history · deposits |
 | **Intermediate** | **Limit orders** that fill on live ticks · **price alerts** · **recurring auto-invest** (dollar-cost averaging that catches up while you're away) · **dividends** with **DRIP** auto-reinvest · **round-ups** (spare-change sweeps into an ETF) · allocation donuts by holding & sector · light/dark theme |
-| **Advanced** | Deterministic **GBM market simulation engine** (5-year price histories generated backward from realistic anchors) · **event-sourced performance chart** (portfolio value on any past day is reconstructed by replaying the transaction log) · **diversification score** heuristic · compound-growth "Future You" calculator · gamification (XP, levels, streaks, 10 badges) · 12-lesson Learn hub with quizzes |
+| **Advanced** | Deterministic **GBM market simulation engine** (5-year price histories generated backward from realistic anchors) · **event-sourced performance chart** (portfolio value on any past day is reconstructed by replaying the transaction log) · **diversification score** heuristic · **Strategy Lab backtester** (buy & hold, DCA, trend following, EMA crossover with ATR trailing stops; Sharpe, drawdown, CAGR, win rate; no look-ahead bias; runs in a Web Worker) · compound-growth "Future You" calculator · gamification (XP, levels, streaks, 10 badges) · 12-lesson Learn hub with quizzes |
 
 The GenZ-student positioning is deliberate and runs through everything: the asset universe
 (Spotify, Duolingo, Roblox, Chipotle…, each with a "why students care" blurb), a "Student Life 🎒"
@@ -25,6 +25,7 @@ discover shelf, TFSA framing, casual copy, Duolingo-style streaks, and a dark-fi
 ```bash
 npm install
 npm run dev      # → http://localhost:5173
+npm test         # 47 Vitest unit tests (simulation, indicators, backtester, analytics)
 npm run build    # type-checks & produces dist/ (deployable to any static host)
 ```
 
@@ -41,7 +42,10 @@ No environment variables, no accounts, no API keys. Everything persists to `loca
 3. **Analytics** ([src/lib/analytics.ts](src/lib/analytics.ts)) — the performance chart replays
    that log against historical closes to reconstruct portfolio value on any past day
    (event sourcing, the same idea real brokerages use).
-4. **UI** — React + Tailwind, mobile-first with a bottom tab bar, sidebar on desktop.
+4. **Strategy Lab** ([src/lib/backtest.ts](src/lib/backtest.ts)) — replays trading rules
+   bar-by-bar over the same histories, filling signals on the next bar (no look-ahead), and
+   scores them against buy-and-hold. Runs in a Web Worker so sliders stay smooth.
+5. **UI** — React + Tailwind, mobile-first with a bottom tab bar, sidebar on desktop.
 
 Full details: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) ·
 feature-by-feature walkthrough: [docs/FEATURES.md](docs/FEATURES.md) ·
@@ -53,13 +57,15 @@ why each decision was made: [docs/DECISIONS.md](docs/DECISIONS.md)
 - **Zustand** with `persist` middleware — global state + localStorage persistence
 - **React Router 6** (hash routing so static hosting "just works")
 - **Tailwind CSS 3** — custom design system (brand lime + ink palette, Space Grotesk / Inter)
-- **Recharts** — area & donut charts; hand-rolled SVG sparklines for list rows
+- **Recharts** — area, line & donut charts; hand-rolled SVG sparklines for list rows
+- **Web Worker** — backtests run off the main thread
+- **Vitest** + **GitHub Actions** — unit tests and a test + build check on every push and PR
 
 ## Screens
 
 Onboarding (risk quiz) → Home (portfolio) → Discover (search, movers, news) → Asset detail
 (chart, stats, trade, alerts, auto-invest) → Activity (ledger) → Learn (lessons + quizzes) →
-Insights (allocation, diversification, projections) → Profile (badges, goals, settings).
+Insights (allocation, diversification, projections) → Strategy Lab (backtests) → Profile (badges, goals, settings).
 
 ## Disclaimers
 

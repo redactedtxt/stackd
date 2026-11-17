@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
-import { Compass, GraduationCap, Home, Receipt, UserRound } from 'lucide-react';
+import { Compass, FlaskConical, GraduationCap, Home, Receipt, UserRound } from 'lucide-react';
 import { useMarketStore } from '../stores/marketStore';
 import { usePortfolioStore } from '../stores/portfolioStore';
 import { useUserStore } from '../stores/userStore';
@@ -20,6 +20,7 @@ const TABS = [
   { to: '/', label: 'Home', icon: Home },
   { to: '/discover', label: 'Discover', icon: Compass },
   { to: '/learn', label: 'Learn', icon: GraduationCap },
+  { to: '/lab', label: 'Lab', icon: FlaskConical },
   { to: '/activity', label: 'Activity', icon: Receipt },
   { to: '/profile', label: 'Profile', icon: UserRound },
 ];

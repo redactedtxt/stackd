@@ -9,6 +9,7 @@ import { Activity } from './pages/Activity';
 import { Learn, LessonView } from './pages/Learn';
 import { Insights } from './pages/Insights';
 import { Profile } from './pages/Profile';
+import { StrategyLab } from './pages/StrategyLab';
 
 // ---------------------------------------------------------------------------
 // Routing. HashRouter so the built app works from any static host (GitHub
@@ -40,6 +41,7 @@ export default function App() {
               <Route path="/learn" element={<Learn />} />
               <Route path="/learn/:id" element={<LessonView />} />
               <Route path="/insights" element={<Insights />} />
+              <Route path="/lab" element={<StrategyLab />} />
               <Route path="/profile" element={<Profile />} />
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
