@@ -13,6 +13,7 @@ import {
 } from '../lib/analytics';
 import { fmtCompact, fmtMoney, fmtPct, fmtSignedMoney } from '../lib/format';
 import { AllocationDonut } from '../components/AllocationDonut';
+import { Slider } from '../components/Slider';
 import type { PricePoint } from '../lib/market';
 
 // ---------------------------------------------------------------------------
@@ -210,42 +211,6 @@ export function Insights() {
           </p>
         </div>
       </div>
-    </div>
-  );
-}
-
-function Slider({
-  label,
-  value,
-  display,
-  min,
-  max,
-  step,
-  onChange,
-}: {
-  label: string;
-  value: number;
-  display: string;
-  min: number;
-  max: number;
-  step: number;
-  onChange: (v: number) => void;
-}) {
-  return (
-    <div>
-      <div className="flex justify-between text-sm">
-        <span className="text-ink-400">{label}</span>
-        <span className="font-display font-semibold tabular-nums">{display}</span>
-      </div>
-      <input
-        type="range"
-        className="mt-1.5 w-full accent-brand-500"
-        min={min}
-        max={max}
-        step={step}
-        value={value}
-        onChange={(e) => onChange(parseFloat(e.target.value))}
-      />
     </div>
   );
 }

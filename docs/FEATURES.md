@@ -94,6 +94,27 @@ Scholar badge.
   compound-growth projection chart, with the punchline split of "you invested X, compounding
   added Y" — the single most persuasive visual for a student audience.
 
+## Strategy Lab — `src/pages/StrategyLab.tsx`
+
+Engine: `src/lib/backtest.ts` + `src/lib/indicators.ts`, run in `src/workers/backtest.worker.ts`.
+
+- Pick an **asset**, a **test period** (1/2/3/5Y), and a **strategy**: buy & hold, DCA, trend
+  following, or EMA crossover. Only the sliders that apply are shown: DCA interval, fast/slow
+  EMA (kept so fast < slow), trend SMA / trend filter (0 = off), ATR trailing stop (0 = off),
+  and trading cost per buy/sell.
+- **Verdict banner** in plain language: beat or trailed buy & hold by how many points, whether
+  it reduced the worst drop, and the Sharpe ratio compared with buy & hold.
+- **Metric tiles** with buy & hold under each one, colored by which side won (lower wins for
+  drawdown and volatility). Hover a tile to see what the metric means.
+- **Growth of $10,000** chart: strategy vs buy & hold.
+- **Leaderboard**: all four strategies on the same asset and period, ranked by Sharpe. Click a
+  row to switch to that strategy.
+- **Trade list**: entry/exit dates and prices, net return, and exit reason (signal, stop hit,
+  still held). DCA shows each slice as a lot held to the end, so its "win rate" is the share
+  of purchases currently in profit.
+- Footer disclaimer on simulated data and **overfitting**, which is the lesson the page
+  teaches when a student tunes sliders until the numbers look great.
+
 ## Gamification — `userStore` + `src/data/badges.ts`
 
 - **XP**: +15 per trade, +40–65 per lesson. Levels need `60·n²` total XP; level-ups toast.

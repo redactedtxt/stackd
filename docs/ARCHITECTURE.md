@@ -7,17 +7,20 @@ maps to a question you might get asked.
 ┌─────────────────────────────────────────────────────────┐
 │  Pages (React Router)                                   │
 │  Onboarding · Home · Discover · AssetDetail · Activity  │
-│  Learn · Insights · Profile                             │
+│  Learn · Insights · StrategyLab · Profile               │
 ├─────────────────────────────────────────────────────────┤
 │  Shared components                                      │
 │  Layout · PriceChart · AllocationDonut · TradeSheet     │
-│  AssetRow · Sparkline · Toasts                          │
+│  AssetRow · Sparkline · Slider · Toasts                 │
 ├──────────────────────────┬──────────────────────────────┤
 │  Zustand stores          │  Pure libraries              │
 │  marketStore  (quotes)   │  market.ts    (simulation)   │
 │  portfolioStore (ledger) │  analytics.ts (metrics)      │
 │  userStore    (identity) │  format.ts    (display)      │
 │  toastStore   (notices)  │  rng.ts       (seeded PRNG)  │
+│                          │  indicators.ts (SMA/EMA/ATR) │
+│                          │  backtest.ts  (Strategy Lab) │
+│                          │   └─ runs in a Web Worker    │
 ├──────────────────────────┴──────────────────────────────┤
 │  Static data: assets.ts · lessons.ts · news.ts ·        │
 │  badges.ts   +   localStorage (persistence)             │
@@ -98,7 +101,56 @@ Pure functions over (transactions, holdings, quotes):
   Explicitly labeled a teaching tool, not a risk model.
 - `projectGrowth` — future value of monthly contributions, powering the "Future You" calculator.
 
-## 5. UI layer
+## 5. Strategy Lab backtester (`src/lib/backtest.ts`)
+
+Replays a trading rule bar-by-bar over the simulator's daily history and scores it against
+buy-and-hold. Four strategies: **buy & hold** (the benchmark), **DCA**, **trend following**
+(hold while price > N-day SMA), and **EMA crossover** (fast EMA above slow EMA, with an optional
+200-SMA trend filter). Both signal strategies can add an **ATR trailing stop**.
+
+- **Indicators** (`src/lib/indicators.ts`): `sma`, `ema` (seeded with the SMA, `k = 2/(n+1)`),
+  and `atr` with Wilder smoothing. Each returns an array the same length as the input with
+  `NaN` during warm-up, so strategy code reads `fast[i] > slow[i]` with no index offsets.
+  ATR is computed **close-to-close** because the simulator only produces closes.
+- **Engine loop** (`runBacktest`), per bar: (1) fill yesterday's pending signal at today's
+  close, (2) fill scheduled orders (buy-and-hold's first buy, DCA slices), (3) mark to market,
+  (4) decide for tomorrow. Signals fill on the **next** bar, which rules out look-ahead bias.
+- **Trailing stop**: Chandelier-style. The stop sits at `highest close since entry − k × ATR`
+  and only ratchets up. After a stop-out, a latch blocks re-entry until the rule switches off
+  and back on. Otherwise it would buy straight back in the next day.
+- **Costs**: a % charged on every buy and sell, so strategies that trade a lot pay for it.
+- **Metrics** (`computeMetrics`): total return, CAGR, max drawdown, annualized volatility,
+  **Sharpe** (mean ÷ std of daily returns × √365, risk-free rate 0), win rate, trade count,
+  time in market. The simulator's histories include weekends, so a year is 365 bars, not 252.
+- **Warm-up**: indicators are computed over the full 5-year history, so a 1–4 year test starts
+  with warmed-up averages. A 5-year test has no earlier data, so the UI warns about it.
+- **Off the main thread**: `src/workers/backtest.worker.ts` runs the backtest and the
+  leaderboard (5 strategy runs). `useBacktest` debounces slider input, tags each request with
+  an increasing id and drops stale responses. It falls back to running synchronously if
+  workers are unavailable. Because the engine is deterministic, the worker builds a copy of
+  the price history identical to the main thread's.
+
+## 6. Tests & CI
+
+**Vitest** (`npm test`) covers every pure library with 47 tests:
+
+- `rng.test.ts`: FNV-1a against published test vectors, PRNG replayability, Gaussian mean/std.
+- `market.test.ts`: history length and spacing, ends exactly at the anchor price, identical
+  path when regenerated in a fresh module, realized volatility within 10% of each asset's
+  configured σ, plus a pinned snapshot that fails if the simulation math changes.
+- `indicators.test.ts`: SMA/EMA/ATR against hand-computed values.
+- `backtest.test.ts`: drawdown and Sharpe math, **no look-ahead** (entries fill on the bar
+  after the crossover), stops exiting before the trend rule, the re-entry latch, DCA vs lump
+  sum in rising and falling markets, costs, determinism, and a check of every strategy on every
+  asset for sane metrics.
+- `analytics.test.ts`: the event-sourced replay (with faked time), valuation, diversification
+  ordering, and `projectGrowth` against the closed-form annuity formula.
+
+Tests use hand-built price paths (`src/test/helpers.ts`) wherever possible, so expected values
+can be worked out on paper. **GitHub Actions** (`.github/workflows/ci.yml`) runs `npm ci`,
+`npm test` and `npm run build` (which type-checks) on every push to `main` and on every PR.
+
+## 7. UI layer
 
 - **Mobile-first**: bottom tab bar under 640px (students live on phones), sidebar on desktop.
   One `Layout` component owns navigation plus app lifecycle (start ticker, record streak
@@ -113,14 +165,14 @@ Pure functions over (transactions, holdings, quotes):
 - **Routing**: `HashRouter` so `dist/` works on any static host (GitHub Pages) without
   rewrite rules.
 
-## 6. Data model (`src/types.ts`)
+## 8. Data model (`src/types.ts`)
 
 One file holds every domain shape: `Asset`, `Quote`, `Transaction`, `Holding`, `LimitOrder`,
 `PriceAlert`, `RecurringPlan`, `Goal`, `Badge`, `Lesson`, `NewsItem`. TypeScript strict mode
 is on; the union type `TxType` ensures the activity feed, filters, and ledger logic stay in
 sync when a new transaction kind is added.
 
-## 7. What a production version would change
+## 9. What a production version would change
 
 Honest scope notes (good interview material):
 
@@ -128,5 +180,6 @@ Honest scope notes (good interview material):
 - A backend (auth, Postgres ledger, order-matching service) replacing localStorage.
 - Decimal arithmetic (or integer cents) instead of floats for money.
 - Dividends quarterly on real ex-dates (compressed to monthly here so learners see the loop).
-- Test suite: the pure libs (`market`, `analytics`, `rng`) are deliberately side-effect-free
-  and would be trivial to unit test.
+- Component/E2E tests (React Testing Library, Playwright) on top of the existing unit suite.
+- Backtester: real OHLC bars for a true ATR, walk-forward testing to measure overfitting, and
+  position sizing by risk instead of all-in/all-out.

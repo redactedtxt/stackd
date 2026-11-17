@@ -87,12 +87,52 @@ Not decoration — it's the retention mechanic of the products this audience alr
 investor behavior* (diversifying, automating, learning), never volume of trading — an ethical
 line real brokerages have been criticized for crossing.
 
+## Why add a backtester to a student app?
+
+The rest of the app teaches long-term investing. Strategy Lab lets students *test* the trading
+"strategies" they see on TikTok instead of taking them on faith. On most assets, simple timing
+rules trail buy-and-hold on return and sometimes win on risk. Students find that out
+themselves, which makes the point better than a lesson could. The simulator was already
+deterministic with 5 years of daily data, so the Lab needed no new data source.
+
+## Why fill signals on the next bar?
+
+A rule that decides on today's close can't also trade at today's close, because you only know
+the close once the market has shut. Filling on the same bar is the most common backtesting bug
+(**look-ahead bias**) and makes strategies look better than they are. Here, signals fill on
+the next bar, and a unit test pins it. Scheduled orders (DCA, buy & hold's first buy) use no
+price information, so they fill the same day.
+
+## Why a close-to-close ATR?
+
+Real ATR uses each bar's high and low. The simulator only generates closes, and adding fake
+highs and lows would be invented data. Close-to-close ATR still measures what the stop needs,
+a typical daily move, so a stop sits further away on DOGE than on VOO. The catch is that it
+reads lower than true ATR, so a given multiple makes a tighter stop. The docs and tests say so.
+
+## Why a Web Worker for backtests?
+
+Every slider change runs 5 strategy simulations over up to 1,825 bars. That's milliseconds,
+but it would run on the same thread as React rendering and the 3-second market ticker. The
+worker keeps dragging smooth and shows a non-blocking pattern (debounced requests, ids that
+drop stale responses) that scales if the engine gets heavier. Determinism means the worker
+can rebuild price history itself instead of having it sent over.
+
+## Why Vitest?
+
+It reuses the Vite config and TypeScript setup with nothing extra (no Babel or ts-jest), runs
+the 47-test suite in about a second, and has a Jest-compatible API. The tested code is pure,
+so the tests run in plain Node with no DOM emulation.
+
 ## Known trade-offs (honest list)
 
 - **Float money math**: fine for a simulator; real money needs integer cents or decimals.
 - **Prices tick 24/7, weekends included**: market-hours logic would add realism but complicate
   every history/chart function for little demo value; crypto trades 24/7 anyway.
-- **No tests yet**: the pure libs were designed side-effect-free specifically so unit tests
-  are easy to add — it's the first thing on the roadmap.
+- **Unit tests only**: the pure libraries are covered by Vitest and CI. React components
+  have no tests yet; component and end-to-end tests are the next layer.
+- **Backtester simplifications**: all-in/all-out sizing, close-only data (approximate ATR),
+  and one asset at a time. These keep the focus on the rule itself. Portfolio-level
+  backtests and walk-forward validation are on the roadmap.
 - **Single account (TFSA-framed)**: multiple account types (RRSP/FHSA) would multiply UI
   complexity without adding a new concept; mentioned as roadmap instead.
