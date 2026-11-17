@@ -150,6 +150,12 @@ Tests use hand-built price paths (`src/test/helpers.ts`) wherever possible, so e
 can be worked out on paper. **GitHub Actions** (`.github/workflows/ci.yml`) runs `npm ci`,
 `npm test` and `npm run build` (which type-checks) on every push to `main` and on every PR.
 
+**Deployment**: Vercel's GitHub integration builds the same `npm run build` output (Vite
+preset, `dist/`) and deploys `main` to production at
+[stackd-phi.vercel.app](https://stackd-phi.vercel.app); pull requests get preview URLs. No
+server config is needed because the app is static and uses `HashRouter`, so there are no
+client-side routes for the host to rewrite.
+
 ## 7. UI layer
 
 - **Mobile-first**: bottom tab bar under 640px (students live on phones), sidebar on desktop.

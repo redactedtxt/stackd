@@ -4,7 +4,9 @@
 > students: trade a curated universe of stocks, ETFs, and crypto with $10,000 of practice money,
 > live simulated prices, and a financial-literacy Learn hub — no API keys, no backend, no real risk.
 
-![stack](https://img.shields.io/badge/React_18-TypeScript-blue) ![build](https://img.shields.io/badge/build-Vite_5-yellowgreen) ![style](https://img.shields.io/badge/styling-Tailwind_CSS-38bdf8) ![state](https://img.shields.io/badge/state-Zustand-8a5cf6)
+**▶ Live demo: [stackd-phi.vercel.app](https://stackd-phi.vercel.app)**
+
+![stack](https://img.shields.io/badge/React_18-TypeScript-blue) ![build](https://img.shields.io/badge/build-Vite_5-yellowgreen) ![style](https://img.shields.io/badge/styling-Tailwind_CSS-38bdf8) ![state](https://img.shields.io/badge/state-Zustand-8a5cf6) [![CI](https://github.com/redactedtxt/stackd/actions/workflows/ci.yml/badge.svg)](https://github.com/redactedtxt/stackd/actions/workflows/ci.yml)
 
 ## What it does
 
@@ -30,6 +32,10 @@ npm run build    # type-checks & produces dist/ (deployable to any static host)
 ```
 
 No environment variables, no accounts, no API keys. Everything persists to `localStorage`.
+
+**Deployment:** hosted on Vercel, connected to this GitHub repo. Every push to `main` deploys
+to production, and every pull request gets its own preview URL. GitHub Actions runs the tests
+and the build on the same pushes and PRs.
 
 ## How it works (30-second version)
 
